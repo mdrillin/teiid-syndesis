@@ -47,7 +47,10 @@ import javax.ws.rs.core.UriInfo;
 
 import org.komodo.core.KEngine;
 import org.komodo.core.repository.ObjectImpl;
+import org.komodo.relational.DeployStatus;
 import org.komodo.relational.connection.Connection;
+import org.komodo.relational.model.Model;
+import org.komodo.relational.vdb.ModelSource;
 import org.komodo.relational.vdb.Vdb;
 import org.komodo.relational.workspace.WorkspaceManager;
 import org.komodo.rest.KomodoRestException;
@@ -88,6 +91,12 @@ public final class KomodoConnectionService extends KomodoService {
 
     private static final int ALL_AVAILABLE = -1;
     private TeiidOpenShiftClient openshiftClient;
+    private static final String CONNECTION_VDB_SUFFIX = "BtlConn"; //$NON-NLS-1$
+
+    /**
+     * Time to wait after deploying/undeploying an connection VDB from the metadata instance
+     */
+    private final static int DEPLOYMENT_WAIT_TIME = 5000;
 
     /**
      * @param engine
@@ -340,7 +349,7 @@ public final class KomodoConnectionService extends KomodoService {
 
         // Error if the connection name is missing
         if (StringUtils.isBlank( connectionName )) {
-            return createErrorResponseWithForbidden(mediaTypes, RelationalMessages.Error.CONNECTION_SERVICE_CREATE_MISSING_NAME);
+            return createErrorResponseWithForbidden(mediaTypes, RelationalMessages.Error.CONNECTION_SERVICE_MISSING_CONNECTION_NAME);
         }
 
         // Get the attributes - ensure valid attributes provided
@@ -466,7 +475,7 @@ public final class KomodoConnectionService extends KomodoService {
 
         // Error if the connection name is missing
         if (StringUtils.isBlank( connectionName )) {
-            return createErrorResponseWithForbidden(mediaTypes, RelationalMessages.Error.CONNECTION_SERVICE_CLONE_MISSING_NAME);
+            return createErrorResponseWithForbidden(mediaTypes, RelationalMessages.Error.CONNECTION_SERVICE_MISSING_CONNECTION_NAME);
         }
 
         // Error if the new connection name is missing
@@ -568,7 +577,7 @@ public final class KomodoConnectionService extends KomodoService {
 
         // Error if the connection name is missing
         if (StringUtils.isBlank( connectionName )) {
-            return createErrorResponseWithForbidden(mediaTypes, RelationalMessages.Error.CONNECTION_SERVICE_UPDATE_MISSING_NAME);
+            return createErrorResponseWithForbidden(mediaTypes, RelationalMessages.Error.CONNECTION_SERVICE_MISSING_CONNECTION_NAME);
         }
         
         // Get the attributes - ensure valid attributes provided
@@ -835,6 +844,136 @@ public final class KomodoConnectionService extends KomodoService {
         }
     }
     
+    /**
+     * Initiate schema refresh for a Connection
+     * @param headers
+     *        the request headers (never <code>null</code>)
+     * @param uriInfo
+     *        the request URI information (never <code>null</code>)
+     * @param connectionName
+     *        the connection name (cannot be empty)
+     * @return a JSON representation of the refresh status (never <code>null</code>)
+     * @throws KomodoRestException
+     *         if there is an error initiating a connection schema refresh
+     */
+    @POST
+    @Path( StringConstants.FORWARD_SLASH + V1Constants.REFRESH_SCHEMA_SEGMENT + StringConstants.FORWARD_SLASH + V1Constants.CONNECTION_PLACEHOLDER )
+    @Produces( MediaType.APPLICATION_JSON )
+    @ApiOperation(value = "Initiate schema refresh for a workspace connection")
+    @ApiResponses(value = {
+        @ApiResponse(code = 406, message = "Only JSON is returned by this operation"),
+        @ApiResponse(code = 403, message = "An error has occurred.")
+    })
+    public Response refreshConnectionSchema( final @Context HttpHeaders headers,
+                                             final @Context UriInfo uriInfo,
+                                             @ApiParam(
+                                               value = "Name of the connection",
+                                               required = true
+                                             )
+                                             final @PathParam( "connectionName" ) String connectionName) throws KomodoRestException {
+
+        SecurityPrincipal principal = checkSecurityContext(headers);
+        if (principal.hasErrorResponse())
+            return principal.getErrorResponse();
+
+        List<MediaType> mediaTypes = headers.getAcceptableMediaTypes();
+        if (! isAcceptable(mediaTypes, MediaType.APPLICATION_JSON_TYPE))
+            return notAcceptableMediaTypesBuilder().build();
+
+        // Error if the connection name is missing
+        if (StringUtils.isBlank( connectionName )) {
+            return createErrorResponseWithForbidden(mediaTypes, RelationalMessages.Error.CONNECTION_SERVICE_MISSING_CONNECTION_NAME);
+        }
+
+        UnitOfWork uow = null;
+
+        try {
+            uow = createTransaction(principal, "refreshConnectionSchema", false ); //$NON-NLS-1$
+
+            // Find the requested connection
+            Connection connection = findConnection(uow, connectionName);
+            if (connection == null)
+                return commitNoConnectionFound(uow, mediaTypes, connectionName);
+
+            // Initiate the VDB deployment
+            doDeployConnectionVdb(uow, connection);
+
+            KomodoStatusObject kso = new KomodoStatusObject("Connection Schema refresh status"); //$NON-NLS-1$
+            kso.addAttribute(connectionName, "Initiated schema refresh"); //$NON-NLS-1$
+
+            return commit(uow, mediaTypes, kso);
+        } catch (final Exception e) {
+            if ((uow != null) && (uow.getState() != State.ROLLED_BACK)) {
+                uow.rollback();
+            }
+
+            if (e instanceof KomodoRestException) {
+                throw (KomodoRestException)e;
+            }
+
+            return createErrorResponseWithForbidden(mediaTypes, e, RelationalMessages.Error.CONNECTION_SERVICE_REFRESH_SCHEMA_ERROR);
+        }
+    }
+
+    /**
+     * Deploy / re-deploy a VDB to the metadata instance for the provided workspace connection.
+     * @param uow the transaction
+     * @param connection the connection
+     * @return the DeployStatus from deploying the VDB
+     * @throws KException
+     * @throws InterruptedException
+     */
+    private DeployStatus doDeployConnectionVdb( final UnitOfWork uow,
+    		                                    Connection connection ) throws KException, InterruptedException {
+    	assert( uow.getState() == State.NOT_STARTED );
+    	assert( connection != null );
+
+    	// Get necessary info from the connection
+    	String connectionName = connection.getName(uow);
+        String jndiName = connection.getJndiName(uow);
+        String driverName = connection.getDriverName(uow);
+        
+        // Name of VDB to be created is based on the connection name
+        String vdbName = connectionName + CONNECTION_VDB_SUFFIX;
+        
+        // VDB is created in the repository.  If it already exists, delete it
+        Repository repo = this.kengine.getDefaultRepository();
+        final WorkspaceManager mgr = WorkspaceManager.getInstance( repo, uow );
+        String repoPath = repo.komodoWorkspace( uow ).getAbsolutePath();
+        
+        final Vdb existingVdb = findVdb( uow, vdbName );
+
+        if ( existingVdb != null ) {
+            mgr.delete(uow, existingVdb);
+        }
+        
+        // Create new VDB
+        String vdbPath = repoPath + "/" + vdbName;
+        final Vdb vdb = getWorkspaceManager(uow).createVdb( uow, null, vdbName, vdbPath );
+        vdb.setDescription(uow, "Vdb for connection "+connectionName);
+                    
+        // Add model to the VDB
+        Model model = vdb.addModel(uow, connectionName);
+        model.setModelType(uow, Model.Type.PHYSICAL);
+        model.setProperty(uow, "importer.TableTypes", "TABLE,VIEW");
+        model.setProperty(uow, "importer.UseQualifiedName", "true");
+        model.setProperty(uow, "importer.UseCatalogName", "false");
+        model.setProperty(uow, "importer.UseFullSchemaName", "false");
+        
+        // Add model source to the model
+        ModelSource modelSource = model.addSource(uow, connectionName);
+        modelSource.setJndiName(uow, jndiName);
+        modelSource.setTranslatorName(uow, driverName);
+        
+        // Deploy the VDB
+        DeployStatus deployStatus = vdb.deploy(uow);
+        
+        // Wait for deployment to complete
+        Thread.sleep(DEPLOYMENT_WAIT_TIME);
+        
+        return deployStatus;
+    }
+
     private synchronized MetadataInstance getMetadataInstance() throws KException {
         return this.kengine.getMetadataInstance();
     }
