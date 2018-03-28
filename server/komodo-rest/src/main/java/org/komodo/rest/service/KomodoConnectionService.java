@@ -62,6 +62,9 @@ import org.komodo.rest.relational.connection.RestConnection;
 import org.komodo.rest.relational.json.KomodoJsonMarshaller;
 import org.komodo.rest.relational.request.KomodoConnectionAttributes;
 import org.komodo.rest.relational.response.KomodoStatusObject;
+import org.komodo.rest.relational.response.RestConnectionsSummary;
+import org.komodo.rest.relational.response.RestNamedVdbStatus;
+import org.komodo.rest.relational.response.metadata.RestMetadataVdbStatusVdb;
 import org.komodo.servicecatalog.TeiidOpenShiftClient;
 import org.komodo.spi.KException;
 import org.komodo.spi.constants.StringConstants;
@@ -73,6 +76,7 @@ import org.komodo.spi.repository.Repository.UnitOfWork;
 import org.komodo.spi.repository.Repository.UnitOfWork.State;
 import org.komodo.spi.runtime.ServiceCatalogDataSource;
 import org.komodo.spi.runtime.TeiidDataSource;
+import org.komodo.spi.runtime.TeiidVdb;
 import org.komodo.utils.StringUtils;
 
 import io.swagger.annotations.Api;
@@ -89,7 +93,21 @@ import io.swagger.annotations.ApiResponses;
 @Api(tags = {V1Constants.CONNECTIONS_SEGMENT})
 public final class KomodoConnectionService extends KomodoService {
 
-    private static final int ALL_AVAILABLE = -1;
+	private interface QueryParam {
+
+        /**
+         * Indicates if schema statuses should be returned. Defaults to <code>false</code>.
+         */
+        String INCLUDE_SCHEMA_STATUS = "include-schema-status"; //$NON-NLS-1$
+
+        /**
+         * Indicates if workspace connection should be included. Defaults to <code>true</code>.
+         */
+        String INCLUDE_CONNECTION = "include-connection"; //$NON-NLS-1$
+
+    }
+
+	private static final int ALL_AVAILABLE = -1;
     private TeiidOpenShiftClient openshiftClient;
     private static final String CONNECTION_VDB_SUFFIX = "BtlConn"; //$NON-NLS-1$
 
@@ -124,7 +142,7 @@ public final class KomodoConnectionService extends KomodoService {
     @GET
     @Produces( MediaType.APPLICATION_JSON )
     @ApiOperation(value = "Return the collection of connections",
-                            response = RestConnection[].class)
+                  response = RestConnectionsSummary.class)
     @ApiResponses(value = {
         @ApiResponse(code = 403, message = "An error has occurred.")
     })
@@ -137,93 +155,131 @@ public final class KomodoConnectionService extends KomodoService {
 
         List<MediaType> mediaTypes = headers.getAcceptableMediaTypes();
         UnitOfWork uow = null;
+        boolean includeSchemaStatus = false;
+        boolean includeConnection = true;
+        final List< RestConnection > restConnections = new ArrayList<>();
+        final List< RestNamedVdbStatus > restStatuses = new ArrayList<>();
 
         try {
+            { // include-schema-status query parameter
+                final String param = uriInfo.getQueryParameters().getFirst( QueryParam.INCLUDE_SCHEMA_STATUS );
+
+                if ( param != null ) {
+                    includeSchemaStatus = Boolean.parseBoolean( param );
+                }
+            }
+
+            { // include-connection query parameter
+                final String param = uriInfo.getQueryParameters().getFirst( QueryParam.INCLUDE_CONNECTION );
+
+                if ( param != null ) {
+                	includeConnection = Boolean.parseBoolean( param );
+                }
+            }
+
             final String searchPattern = uriInfo.getQueryParameters().getFirst( QueryParamKeys.PATTERN );
+            includeConnection = includeConnection || !StringUtils.isBlank( searchPattern ); // assume if search pattern exists that connections should be returned
 
             // find connections
-            uow = createTransaction(principal, "getConnections", true ); //$NON-NLS-1$
+            final String txId = "getConnections?includeSchemaStatus=" + includeSchemaStatus + "&includeConnection=" + includeConnection; //$NON-NLS-1$ //$NON-NLS-2$
+            uow = createTransaction(principal, txId, true );
+
+            final Collection< TeiidVdb > vdbs = includeSchemaStatus ? getMetadataInstance().getVdbs() : null;
             Connection[] connections = null;
 
-            if ( StringUtils.isBlank( searchPattern ) ) {
-                connections = getWorkspaceManager(uow).findConnections( uow );
-                LOGGER.debug( "getConnections:found '{0}' Connections", connections.length ); //$NON-NLS-1$
-            } else {
-                final String[] connectionPaths = getWorkspaceManager(uow).findByType( uow, DataVirtLexicon.Connection.NODE_TYPE, null, searchPattern, false );
+            if ( includeConnection ) {	
+	            if ( StringUtils.isBlank( searchPattern ) ) {
+	                connections = getWorkspaceManager(uow).findConnections( uow );
+	                LOGGER.debug( "getConnections:found '{0}' Connections", connections.length ); //$NON-NLS-1$
+	            } else {
+	                final String[] connectionPaths = getWorkspaceManager(uow).findByType( uow, DataVirtLexicon.Connection.NODE_TYPE, null, searchPattern, false );
+	
+	                if ( connectionPaths.length == 0 ) {
+	                    connections = Connection.NO_CONNECTIONS;
+	                } else {
+	                    connections = new Connection[ connectionPaths.length ];
+	                    int i = 0;
+	
+	                    for ( final String path : connectionPaths ) {
+	                        connections[ i++ ] = getWorkspaceManager(uow).resolve( uow, new ObjectImpl( getWorkspaceManager(uow).getRepository(), path, 0 ), Connection.class );
+	                    }
+	
+	                    LOGGER.debug( "getConnections:found '{0}' Connections using pattern '{1}'", connections.length, searchPattern ); //$NON-NLS-1$
+	                }
+	            }
+	
+	            int start = 0;
+	
+	            { // start query parameter
+	                final String qparam = uriInfo.getQueryParameters().getFirst( QueryParamKeys.START );
+	
+	                if ( qparam != null ) {
+	
+	                    try {
+	                        start = Integer.parseInt( qparam );
+	
+	                        if ( start < 0 ) {
+	                            start = 0;
+	                        }
+	                    } catch ( final Exception e ) {
+	                        start = 0;
+	                    }
+	                }
+	            }
+	
+	            int size = ALL_AVAILABLE;
+	
+	            { // size query parameter
+	                final String qparam = uriInfo.getQueryParameters().getFirst( QueryParamKeys.SIZE );
+	
+	                if ( qparam != null ) {
+	
+	                    try {
+	                        size = Integer.parseInt( qparam );
+	
+	                        if ( size <= 0 ) {
+	                            size = ALL_AVAILABLE;
+	                        }
+	                    } catch ( final Exception e ) {
+	                        size = ALL_AVAILABLE;
+	                    }
+	                }
+	            }
+	
+	            int i = 0;
+	
+	            KomodoProperties properties = new KomodoProperties();
+	            for ( final Connection connection : connections ) {
+	                if ( ( start == 0 ) || ( i >= start ) ) {
+	                    if ( ( size == ALL_AVAILABLE ) || ( restConnections.size() < size ) ) {                        
+	                        RestConnection entity = entityFactory.create(connection, uriInfo.getBaseUri(), uow, properties);
+	                        restConnections.add(entity);
+	                        LOGGER.debug("getConnections:Connection '{0}' entity was constructed", connection.getName(uow)); //$NON-NLS-1$
 
-                if ( connectionPaths.length == 0 ) {
-                    connections = Connection.NO_CONNECTIONS;
-                } else {
-                    connections = new Connection[ connectionPaths.length ];
-                    int i = 0;
-
-                    for ( final String path : connectionPaths ) {
-                        connections[ i++ ] = getWorkspaceManager(uow).resolve( uow, new ObjectImpl( getWorkspaceManager(uow).getRepository(), path, 0 ), Connection.class );
-                    }
-
-                    LOGGER.debug( "getConnections:found '{0}' Connections using pattern '{1}'", connections.length, searchPattern ); //$NON-NLS-1$
+	                        if ( includeSchemaStatus ) {
+	                           	restStatuses.add( createVdbStatusRestEntity( uow, vdbs, connection ) );
+	                        }
+	                    } else {
+	                        break;
+	                    }
+	                }
+	
+	                ++i;
+	            }
+            } else if ( includeSchemaStatus ) { // include schema status and no connections
+            	connections = getWorkspaceManager(uow).findConnections( uow );
+                
+                for ( final Connection connection: connections ) {
+                	restStatuses.add( createVdbStatusRestEntity( uow, vdbs, connection ) );
                 }
-            }
-
-            int start = 0;
-
-            { // start query parameter
-                final String qparam = uriInfo.getQueryParameters().getFirst( QueryParamKeys.START );
-
-                if ( qparam != null ) {
-
-                    try {
-                        start = Integer.parseInt( qparam );
-
-                        if ( start < 0 ) {
-                            start = 0;
-                        }
-                    } catch ( final Exception e ) {
-                        start = 0;
-                    }
-                }
-            }
-
-            int size = ALL_AVAILABLE;
-
-            { // size query parameter
-                final String qparam = uriInfo.getQueryParameters().getFirst( QueryParamKeys.SIZE );
-
-                if ( qparam != null ) {
-
-                    try {
-                        size = Integer.parseInt( qparam );
-
-                        if ( size <= 0 ) {
-                            size = ALL_AVAILABLE;
-                        }
-                    } catch ( final Exception e ) {
-                        size = ALL_AVAILABLE;
-                    }
-                }
-            }
-
-            final List< RestConnection > entities = new ArrayList< >();
-            int i = 0;
-
-            KomodoProperties properties = new KomodoProperties();
-            for ( final Connection connection : connections ) {
-                if ( ( start == 0 ) || ( i >= start ) ) {
-                    if ( ( size == ALL_AVAILABLE ) || ( entities.size() < size ) ) {                        
-                        RestConnection entity = entityFactory.create(connection, uriInfo.getBaseUri(), uow, properties);
-                        entities.add(entity);
-                        LOGGER.debug("getConnections:Connection '{0}' entity was constructed", connection.getName(uow)); //$NON-NLS-1$
-                    } else {
-                        break;
-                    }
-                }
-
-                ++i;
             }
 
             // create response
-            return commit( uow, mediaTypes, entities );
-
+            final RestConnectionsSummary summary =
+            		new RestConnectionsSummary( uriInfo.getBaseUri(),
+            	                                restConnections.toArray( new RestConnection[ 0 ] ),
+            		                            restStatuses.toArray( new RestNamedVdbStatus[ 0 ]) );
+            return commit( uow, mediaTypes, summary );
         } catch ( final Exception e ) {
             if ( ( uow != null ) && ( uow.getState() != State.ROLLED_BACK ) ) {
                 uow.rollback();
@@ -237,6 +293,30 @@ public final class KomodoConnectionService extends KomodoService {
         }
     }
 
+    private RestNamedVdbStatus createVdbStatusRestEntity( final UnitOfWork uow,
+    		                                              final Collection< TeiidVdb > vdbs,
+                                                          final Connection connection ) throws Exception {
+    	final String connectionName = connection.getName( uow );
+    	final String connVdbName = connectionName + CONNECTION_VDB_SUFFIX;
+    	
+    	// Find VDB for the connection and add status
+    	TeiidVdb connVdb = null;
+
+    	for ( final TeiidVdb vdb : vdbs ) {
+        	if ( vdb.getName().equals( connVdbName ) ) {
+        		connVdb = vdb;
+        		break;
+        	}
+        }
+
+    	if ( connVdb == null ) {
+    		return new RestNamedVdbStatus( connectionName );
+        }
+ 
+        final RestMetadataVdbStatusVdb vdbStatus = new RestMetadataVdbStatusVdb( connVdb );
+        return new RestNamedVdbStatus( connectionName, vdbStatus );
+    }
+ 
     /**
      * @param headers
      *        the request headers (never <code>null</code>)
