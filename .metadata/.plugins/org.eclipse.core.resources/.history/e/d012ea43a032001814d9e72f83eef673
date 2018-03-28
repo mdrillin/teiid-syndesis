@@ -1,0 +1,7 @@
+package org.komodo.rest.relational.connection;
+
+import org.komodo.rest.RestBasicEntity;
+
+public final class RestConnectionsSummary extends RestBasicEntity {
+
+}

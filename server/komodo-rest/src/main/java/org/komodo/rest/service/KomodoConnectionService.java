@@ -373,11 +373,11 @@ public final class KomodoConnectionService extends KomodoService {
         try {
             // Add properties for the description and serviceCatalogSource
             restConnection.addProperty("description", rcAttr.getDescription());
-            restConnection.addProperty("serviceCatalogSource", rcAttr.getServiceCatalogSource());
+            restConnection.addProperty(DataVirtLexicon.Connection.SERVICE_CATALOG_SOURCE, rcAttr.getServiceCatalogSource());
             restConnection.setJdbc(true);
             
             // Get the specified ServiceCatalogDataSource from the metadata instance
-            Collection<ServiceCatalogDataSource> dataSources = openshiftClient.getServiceCatalogSources();
+            Collection<ServiceCatalogDataSource> dataSources = openshiftClient.getServiceCatalogSources(getAuthenticationToken());
 			for(ServiceCatalogDataSource ds: dataSources) {
 				if(ds.getName().equals(rcAttr.getServiceCatalogSource())) {
 					serviceCatalogSource = ds;
@@ -403,7 +403,7 @@ public final class KomodoConnectionService extends KomodoService {
             }
 
 			// Ensures service catalog is bound, and creates the corresponding datasource in wildfly
-			openshiftClient.bindToServiceCatalogSource(serviceCatalogSource.getName());
+			openshiftClient.bindToServiceCatalogSource(getAuthenticationToken(), serviceCatalogSource.getName());
 			
 			// Get the connection from the wildfly instance (should be available after binding)
             TeiidDataSource dataSource = getMetadataInstance().getDataSource(serviceCatalogSource.getName());
@@ -521,7 +521,7 @@ public final class KomodoConnectionService extends KomodoService {
                 throw (KomodoRestException)e;
             }
 
-            return createErrorResponseWithForbidden(mediaTypes, e, RelationalMessages.Error.CONNECTION_SERVICE_CLONE_CONNECTION_ERROR);
+            return createErrorResponseWithForbidden(mediaTypes, e, RelationalMessages.Error.CONNECTION_SERVICE_CLONE_CONNECTION_ERROR, connectionName);
         }
     }
 
@@ -601,11 +601,11 @@ public final class KomodoConnectionService extends KomodoService {
         try {
             // Add properties for the description and serviceCatalogSource
             restConnection.addProperty("description", rcAttr.getDescription());
-            restConnection.addProperty("serviceCatalogSource", rcAttr.getServiceCatalogSource());
+            restConnection.addProperty(DataVirtLexicon.Connection.SERVICE_CATALOG_SOURCE, rcAttr.getServiceCatalogSource());
             restConnection.setJdbc(true);
             
             // Get the specified ServiceCatalogDataSource from the metadata instance
-            Collection<ServiceCatalogDataSource> dataSources = openshiftClient.getServiceCatalogSources();
+            Collection<ServiceCatalogDataSource> dataSources = openshiftClient.getServiceCatalogSources(getAuthenticationToken());
 			for(ServiceCatalogDataSource ds: dataSources) {
 				if(ds.getName().equals(rcAttr.getServiceCatalogSource())) {
 					serviceCatalogSource = ds;
@@ -635,7 +635,7 @@ public final class KomodoConnectionService extends KomodoService {
             getWorkspaceManager(uow).delete(uow, kobject);
 
 			// Ensures service catalog is bound, and creates the corresponding datasource in wildfly
-			openshiftClient.bindToServiceCatalogSource(serviceCatalogSource.getName());
+			openshiftClient.bindToServiceCatalogSource(getAuthenticationToken(), serviceCatalogSource.getName());
 			
 			// Get the connection from the wildfly instance (should be available after binding)
             TeiidDataSource dataSource = getMetadataInstance().getDataSource(serviceCatalogSource.getName());
@@ -661,7 +661,7 @@ public final class KomodoConnectionService extends KomodoService {
                 throw (KomodoRestException)e;
             }
 
-            return createErrorResponseWithForbidden(mediaTypes, e, RelationalMessages.Error.CONNECTION_SERVICE_UPDATE_CONNECTION_ERROR);
+            return createErrorResponseWithForbidden(mediaTypes, e, RelationalMessages.Error.CONNECTION_SERVICE_UPDATE_CONNECTION_ERROR, connectionName);
         }
     }
 
@@ -757,7 +757,7 @@ public final class KomodoConnectionService extends KomodoService {
                 throw (KomodoRestException)e;
             }
 
-            return createErrorResponseWithForbidden(mediaTypes, e, RelationalMessages.Error.CONNECTION_SERVICE_DELETE_CONNECTION_ERROR);
+            return createErrorResponseWithForbidden(mediaTypes, e, RelationalMessages.Error.CONNECTION_SERVICE_DELETE_CONNECTION_ERROR, connectionName);
         }
     }
 

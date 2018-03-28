@@ -1,0 +1,175 @@
+!SESSION 2018-03-26 13:41:12.293 -----------------------------------------------
+eclipse.buildId=4.7.3.M20180301-0715
+java.version=1.8.0_51
+java.vendor=Oracle Corporation
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=en_US
+Framework arguments:  -product org.eclipse.epp.package.java.product -product org.eclipse.epp.package.java.product -keyring /Users/dan/.eclipse_keyring
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -product org.eclipse.epp.package.java.product -data /Users/dan/Work/teiid-komodo -product org.eclipse.epp.package.java.product -keyring /Users/dan/.eclipse_keyring
+
+!ENTRY org.eclipse.jdt.ui 4 10001 2018-03-26 14:31:51.704
+!MESSAGE Internal Error
+!STACK 1
+Java Model Exception: Java Model Status [server does not exist]
+	at org.eclipse.jdt.internal.core.JavaElement.newJavaModelException(JavaElement.java:570)
+	at org.eclipse.jdt.internal.core.Openable.generateInfos(Openable.java:247)
+	at org.eclipse.jdt.internal.core.JavaElement.openWhenClosed(JavaElement.java:583)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:320)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:306)
+	at org.eclipse.jdt.internal.core.JavaProject.getJavaProjectElementInfo(JavaProject.java:1926)
+	at org.eclipse.jdt.internal.core.JavaProject.newNameLookup(JavaProject.java:2622)
+	at org.eclipse.jdt.internal.core.SearchableEnvironment.<init>(SearchableEnvironment.java:84)
+	at org.eclipse.jdt.internal.core.SearchableEnvironment.<init>(SearchableEnvironment.java:104)
+	at org.eclipse.jdt.internal.core.JavaProject.newSearchableNameEnvironment(JavaProject.java:2647)
+	at org.eclipse.jdt.internal.core.Openable.codeSelect(Openable.java:149)
+	at org.eclipse.jdt.internal.core.CompilationUnit.codeSelect(CompilationUnit.java:378)
+	at org.eclipse.jdt.internal.core.CompilationUnit.codeSelect(CompilationUnit.java:372)
+	at org.eclipse.jdt.internal.ui.actions.SelectionConverter.codeResolve(SelectionConverter.java:274)
+	at org.eclipse.jdt.internal.ui.actions.SelectionConverter$1CodeResolveRunnable.run(SelectionConverter.java:258)
+	at org.eclipse.jface.operation.ModalContext$ModalContextThread.run(ModalContext.java:119)
+!SUBENTRY 1 org.eclipse.jdt.core 4 969 2018-03-26 14:31:51.705
+!MESSAGE server does not exist
+
+!ENTRY org.eclipse.jdt.ui 4 10001 2018-03-26 14:32:21.402
+!MESSAGE Internal Error
+!STACK 1
+Java Model Exception: Java Model Status [server does not exist]
+	at org.eclipse.jdt.internal.core.JavaElement.newJavaModelException(JavaElement.java:570)
+	at org.eclipse.jdt.internal.core.Openable.generateInfos(Openable.java:247)
+	at org.eclipse.jdt.internal.core.JavaElement.openWhenClosed(JavaElement.java:583)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:320)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:306)
+	at org.eclipse.jdt.internal.core.JavaProject.getJavaProjectElementInfo(JavaProject.java:1926)
+	at org.eclipse.jdt.internal.core.JavaProject.newNameLookup(JavaProject.java:2622)
+	at org.eclipse.jdt.internal.core.SearchableEnvironment.<init>(SearchableEnvironment.java:84)
+	at org.eclipse.jdt.internal.core.SearchableEnvironment.<init>(SearchableEnvironment.java:104)
+	at org.eclipse.jdt.internal.core.JavaProject.newSearchableNameEnvironment(JavaProject.java:2647)
+	at org.eclipse.jdt.internal.core.Openable.codeSelect(Openable.java:149)
+	at org.eclipse.jdt.internal.core.CompilationUnit.codeSelect(CompilationUnit.java:378)
+	at org.eclipse.jdt.internal.core.CompilationUnit.codeSelect(CompilationUnit.java:372)
+	at org.eclipse.jdt.internal.ui.actions.SelectionConverter.codeResolve(SelectionConverter.java:274)
+	at org.eclipse.jdt.internal.ui.actions.SelectionConverter$1CodeResolveRunnable.run(SelectionConverter.java:258)
+	at org.eclipse.jface.operation.ModalContext$ModalContextThread.run(ModalContext.java:119)
+!SUBENTRY 1 org.eclipse.jdt.core 4 969 2018-03-26 14:32:21.402
+!MESSAGE server does not exist
+
+!ENTRY org.eclipse.jdt.ui 4 10001 2018-03-26 14:45:10.029
+!MESSAGE Internal Error
+!STACK 1
+Java Model Exception: Java Model Status [server does not exist]
+	at org.eclipse.jdt.internal.core.JavaElement.newJavaModelException(JavaElement.java:570)
+	at org.eclipse.jdt.internal.core.Openable.generateInfos(Openable.java:247)
+	at org.eclipse.jdt.internal.core.JavaElement.openWhenClosed(JavaElement.java:583)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:320)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:306)
+	at org.eclipse.jdt.internal.core.JavaProject.getJavaProjectElementInfo(JavaProject.java:1926)
+	at org.eclipse.jdt.internal.core.JavaProject.newNameLookup(JavaProject.java:2622)
+	at org.eclipse.jdt.internal.core.SearchableEnvironment.<init>(SearchableEnvironment.java:84)
+	at org.eclipse.jdt.internal.core.SearchableEnvironment.<init>(SearchableEnvironment.java:104)
+	at org.eclipse.jdt.internal.core.JavaProject.newSearchableNameEnvironment(JavaProject.java:2647)
+	at org.eclipse.jdt.internal.core.Openable.codeSelect(Openable.java:149)
+	at org.eclipse.jdt.internal.core.CompilationUnit.codeSelect(CompilationUnit.java:378)
+	at org.eclipse.jdt.internal.core.CompilationUnit.codeSelect(CompilationUnit.java:372)
+	at org.eclipse.jdt.internal.ui.actions.SelectionConverter.codeResolve(SelectionConverter.java:274)
+	at org.eclipse.jdt.internal.ui.actions.SelectionConverter$1CodeResolveRunnable.run(SelectionConverter.java:258)
+	at org.eclipse.jface.operation.ModalContext$ModalContextThread.run(ModalContext.java:119)
+!SUBENTRY 1 org.eclipse.jdt.core 4 969 2018-03-26 14:45:10.029
+!MESSAGE server does not exist
+
+!ENTRY org.eclipse.jdt.ui 4 10001 2018-03-26 14:45:21.394
+!MESSAGE Internal Error
+!STACK 1
+Java Model Exception: Java Model Status [server does not exist]
+	at org.eclipse.jdt.internal.core.JavaElement.newJavaModelException(JavaElement.java:570)
+	at org.eclipse.jdt.internal.core.Openable.generateInfos(Openable.java:247)
+	at org.eclipse.jdt.internal.core.JavaElement.openWhenClosed(JavaElement.java:583)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:320)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:306)
+	at org.eclipse.jdt.internal.core.JavaProject.getJavaProjectElementInfo(JavaProject.java:1926)
+	at org.eclipse.jdt.internal.core.JavaProject.newNameLookup(JavaProject.java:2622)
+	at org.eclipse.jdt.internal.core.SearchableEnvironment.<init>(SearchableEnvironment.java:84)
+	at org.eclipse.jdt.internal.core.SearchableEnvironment.<init>(SearchableEnvironment.java:104)
+	at org.eclipse.jdt.internal.core.JavaProject.newSearchableNameEnvironment(JavaProject.java:2647)
+	at org.eclipse.jdt.internal.core.Openable.codeSelect(Openable.java:149)
+	at org.eclipse.jdt.internal.core.CompilationUnit.codeSelect(CompilationUnit.java:378)
+	at org.eclipse.jdt.internal.core.CompilationUnit.codeSelect(CompilationUnit.java:372)
+	at org.eclipse.jdt.internal.ui.actions.SelectionConverter.codeResolve(SelectionConverter.java:274)
+	at org.eclipse.jdt.internal.ui.actions.SelectionConverter$1CodeResolveRunnable.run(SelectionConverter.java:258)
+	at org.eclipse.jface.operation.ModalContext$ModalContextThread.run(ModalContext.java:119)
+!SUBENTRY 1 org.eclipse.jdt.core 4 969 2018-03-26 14:45:21.395
+!MESSAGE server does not exist
+
+!ENTRY org.eclipse.jdt.ui 4 10001 2018-03-26 14:45:59.403
+!MESSAGE Internal Error
+!STACK 1
+Java Model Exception: Java Model Status [server does not exist]
+	at org.eclipse.jdt.internal.core.JavaElement.newJavaModelException(JavaElement.java:570)
+	at org.eclipse.jdt.internal.core.Openable.generateInfos(Openable.java:247)
+	at org.eclipse.jdt.internal.core.JavaElement.openWhenClosed(JavaElement.java:583)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:320)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:306)
+	at org.eclipse.jdt.internal.core.JavaProject.getJavaProjectElementInfo(JavaProject.java:1926)
+	at org.eclipse.jdt.internal.core.JavaProject.newNameLookup(JavaProject.java:2622)
+	at org.eclipse.jdt.internal.core.SearchableEnvironment.<init>(SearchableEnvironment.java:84)
+	at org.eclipse.jdt.internal.core.SearchableEnvironment.<init>(SearchableEnvironment.java:104)
+	at org.eclipse.jdt.internal.core.JavaProject.newSearchableNameEnvironment(JavaProject.java:2647)
+	at org.eclipse.jdt.internal.core.Openable.codeSelect(Openable.java:149)
+	at org.eclipse.jdt.internal.core.CompilationUnit.codeSelect(CompilationUnit.java:378)
+	at org.eclipse.jdt.internal.core.CompilationUnit.codeSelect(CompilationUnit.java:372)
+	at org.eclipse.jdt.internal.ui.actions.SelectionConverter.codeResolve(SelectionConverter.java:274)
+	at org.eclipse.jdt.internal.ui.actions.SelectionConverter$1CodeResolveRunnable.run(SelectionConverter.java:258)
+	at org.eclipse.jface.operation.ModalContext$ModalContextThread.run(ModalContext.java:119)
+!SUBENTRY 1 org.eclipse.jdt.core 4 969 2018-03-26 14:45:59.403
+!MESSAGE server does not exist
+!SESSION 2018-03-26 14:46:19.807 -----------------------------------------------
+eclipse.buildId=4.7.3.M20180301-0715
+java.version=1.8.0_51
+java.vendor=Oracle Corporation
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=en_US
+Framework arguments:  -product org.eclipse.epp.package.java.product -keyring /Users/dan/.eclipse_keyring
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -product org.eclipse.epp.package.java.product -keyring /Users/dan/.eclipse_keyring
+
+!ENTRY org.eclipse.jdt.ui 4 10001 2018-03-26 14:46:49.010
+!MESSAGE Internal Error
+!STACK 1
+Java Model Exception: Java Model Status [server does not exist]
+	at org.eclipse.jdt.internal.core.JavaElement.newJavaModelException(JavaElement.java:570)
+	at org.eclipse.jdt.internal.core.Openable.generateInfos(Openable.java:247)
+	at org.eclipse.jdt.internal.core.JavaElement.openWhenClosed(JavaElement.java:583)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:320)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:306)
+	at org.eclipse.jdt.internal.core.JavaProject.getJavaProjectElementInfo(JavaProject.java:1926)
+	at org.eclipse.jdt.internal.core.JavaProject.newNameLookup(JavaProject.java:2622)
+	at org.eclipse.jdt.internal.core.SearchableEnvironment.<init>(SearchableEnvironment.java:84)
+	at org.eclipse.jdt.internal.core.SearchableEnvironment.<init>(SearchableEnvironment.java:104)
+	at org.eclipse.jdt.internal.core.JavaProject.newSearchableNameEnvironment(JavaProject.java:2647)
+	at org.eclipse.jdt.internal.core.Openable.codeSelect(Openable.java:149)
+	at org.eclipse.jdt.internal.core.CompilationUnit.codeSelect(CompilationUnit.java:378)
+	at org.eclipse.jdt.internal.core.CompilationUnit.codeSelect(CompilationUnit.java:372)
+	at org.eclipse.jdt.internal.ui.actions.SelectionConverter.codeResolve(SelectionConverter.java:274)
+	at org.eclipse.jdt.internal.ui.actions.SelectionConverter$1CodeResolveRunnable.run(SelectionConverter.java:258)
+	at org.eclipse.jface.operation.ModalContext$ModalContextThread.run(ModalContext.java:119)
+!SUBENTRY 1 org.eclipse.jdt.core 4 969 2018-03-26 14:46:49.029
+!MESSAGE server does not exist
+
+!ENTRY org.eclipse.jdt.ui 4 10001 2018-03-26 14:47:11.371
+!MESSAGE Internal Error
+!STACK 1
+Java Model Exception: Java Model Status [server does not exist]
+	at org.eclipse.jdt.internal.core.JavaElement.newJavaModelException(JavaElement.java:570)
+	at org.eclipse.jdt.internal.core.Openable.generateInfos(Openable.java:247)
+	at org.eclipse.jdt.internal.core.JavaElement.openWhenClosed(JavaElement.java:583)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:320)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:306)
+	at org.eclipse.jdt.internal.core.JavaProject.getJavaProjectElementInfo(JavaProject.java:1926)
+	at org.eclipse.jdt.internal.core.JavaProject.newNameLookup(JavaProject.java:2622)
+	at org.eclipse.jdt.internal.core.SearchableEnvironment.<init>(SearchableEnvironment.java:84)
+	at org.eclipse.jdt.internal.core.SearchableEnvironment.<init>(SearchableEnvironment.java:104)
+	at org.eclipse.jdt.internal.core.JavaProject.newSearchableNameEnvironment(JavaProject.java:2647)
+	at org.eclipse.jdt.internal.core.Openable.codeSelect(Openable.java:149)
+	at org.eclipse.jdt.internal.core.CompilationUnit.codeSelect(CompilationUnit.java:378)
+	at org.eclipse.jdt.internal.core.CompilationUnit.codeSelect(CompilationUnit.java:372)
+	at org.eclipse.jdt.internal.ui.actions.SelectionConverter.codeResolve(SelectionConverter.java:274)
+	at org.eclipse.jdt.internal.ui.actions.SelectionConverter$1CodeResolveRunnable.run(SelectionConverter.java:258)
+	at org.eclipse.jface.operation.ModalContext$ModalContextThread.run(ModalContext.java:119)
+!SUBENTRY 1 org.eclipse.jdt.core 4 969 2018-03-26 14:47:11.371
+!MESSAGE server does not exist

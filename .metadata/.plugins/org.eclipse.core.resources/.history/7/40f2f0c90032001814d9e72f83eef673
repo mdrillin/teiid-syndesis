@@ -1,0 +1,21 @@
+package org.komodo.rest.relational.response;
+
+import javax.ws.rs.core.MediaType;
+
+import org.komodo.rest.KRestEntity;
+
+public final class RestVdbStatus implements KRestEntity {
+
+	@Override
+	public boolean supports(MediaType mediaType) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public Object getXml() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

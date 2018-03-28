@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Delete 16 resources" deleteContents="false" description="Delete 16 resources" element1="/komodo-core" element10="/komodo-storage-service" element11="/komodo-utils" element12="/komodo-utils-logger" element13="/server" element14="/storage" element15="/storage-file" element16="/storage-git" element2="/komodo-importer" element3="/komodo-integration-utils" element4="/komodo-metadata-instance" element5="/komodo-openshift" element6="/komodo-parent" element7="/komodo-relational" element8="/komodo-rest" element9="/komodo-spi" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="16" stamp="1522094554386"/>
+</session>

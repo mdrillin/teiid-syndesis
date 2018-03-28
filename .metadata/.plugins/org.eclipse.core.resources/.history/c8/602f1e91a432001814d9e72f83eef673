@@ -1,0 +1,5 @@
+package org.komodo.rest.relational.json;
+
+public final class ConnectionsSummarySerializer {
+
+}
