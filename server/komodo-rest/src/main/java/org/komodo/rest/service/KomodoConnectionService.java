@@ -62,7 +62,7 @@ import org.komodo.rest.relational.connection.RestConnection;
 import org.komodo.rest.relational.json.KomodoJsonMarshaller;
 import org.komodo.rest.relational.request.KomodoConnectionAttributes;
 import org.komodo.rest.relational.response.KomodoStatusObject;
-import org.komodo.rest.relational.response.RestConnectionsSummary;
+import org.komodo.rest.relational.response.RestConnectionSummary;
 import org.komodo.rest.relational.response.RestNamedVdbStatus;
 import org.komodo.rest.relational.response.metadata.RestMetadataVdbStatusVdb;
 import org.komodo.servicecatalog.TeiidOpenShiftClient;
@@ -130,19 +130,19 @@ public final class KomodoConnectionService extends KomodoService {
     }
 
     /**
-     * Get the Connections from the komodo repository
+     * Get connection summaries from the komodo repository
      * @param headers
      *        the request headers (never <code>null</code>)
      * @param uriInfo
      *        the request URI information (never <code>null</code>)
-     * @return a JSON document representing all the Connections in the Komodo workspace (never <code>null</code>)
+     * @return a JSON document representing the summaries of the requested connections in the Komodo workspace (never <code>null</code>)
      * @throws KomodoRestException
      *         if there is a problem constructing the Connection JSON document
      */
     @GET
     @Produces( MediaType.APPLICATION_JSON )
-    @ApiOperation(value = "Return the collection of connections",
-                  response = RestConnectionsSummary.class)
+    @ApiOperation(value = "Return the summaries of the requested connections",
+                  response = RestConnectionSummary[].class)
     @ApiResponses(value = {
         @ApiResponse(code = 403, message = "An error has occurred.")
     })
@@ -157,8 +157,7 @@ public final class KomodoConnectionService extends KomodoService {
         UnitOfWork uow = null;
         boolean includeSchemaStatus = false;
         boolean includeConnection = true;
-        final List< RestConnection > restConnections = new ArrayList<>();
-        final List< RestNamedVdbStatus > restStatuses = new ArrayList<>();
+        final List< RestConnectionSummary > summaries = new ArrayList<>();
 
         try {
             { // include-schema-status query parameter
@@ -251,15 +250,19 @@ public final class KomodoConnectionService extends KomodoService {
 	            KomodoProperties properties = new KomodoProperties();
 	            for ( final Connection connection : connections ) {
 	                if ( ( start == 0 ) || ( i >= start ) ) {
-	                    if ( ( size == ALL_AVAILABLE ) || ( restConnections.size() < size ) ) {                        
-	                        RestConnection entity = entityFactory.create(connection, uriInfo.getBaseUri(), uow, properties);
-	                        restConnections.add(entity);
+	                	RestConnection restConnection = null;
+	                	RestNamedVdbStatus restStatus = null;
+
+	                	if ( ( size == ALL_AVAILABLE ) || ( summaries.size() < size ) ) {                        
+	                        restConnection = entityFactory.create(connection, uriInfo.getBaseUri(), uow, properties);
 	                        LOGGER.debug("getConnections:Connection '{0}' entity was constructed", connection.getName(uow)); //$NON-NLS-1$
 
 	                        if ( includeSchemaStatus ) {
-	                           	restStatuses.add( createVdbStatusRestEntity( uow, vdbs, connection ) );
+	                           	restStatus = createVdbStatusRestEntity( uow, vdbs, connection );
 	                        }
-	                    } else {
+
+	                        summaries.add( new RestConnectionSummary( uriInfo.getBaseUri(), restConnection, restStatus ) );
+	                	} else {
 	                        break;
 	                    }
 	                }
@@ -270,16 +273,12 @@ public final class KomodoConnectionService extends KomodoService {
             	connections = getWorkspaceManager(uow).findConnections( uow );
                 
                 for ( final Connection connection: connections ) {
-                	restStatuses.add( createVdbStatusRestEntity( uow, vdbs, connection ) );
+                	RestNamedVdbStatus restStatus = createVdbStatusRestEntity( uow, vdbs, connection );
+                    summaries.add( new RestConnectionSummary( uriInfo.getBaseUri(), null, restStatus ) );
                 }
             }
 
-            // create response
-            final RestConnectionsSummary summary =
-            		new RestConnectionsSummary( uriInfo.getBaseUri(),
-            	                                restConnections.toArray( new RestConnection[ 0 ] ),
-            		                            restStatuses.toArray( new RestNamedVdbStatus[ 0 ]) );
-            return commit( uow, mediaTypes, summary );
+            return commit( uow, mediaTypes, summaries );
         } catch ( final Exception e ) {
             if ( ( uow != null ) && ( uow.getState() != State.ROLLED_BACK ) ) {
                 uow.rollback();
@@ -323,15 +322,15 @@ public final class KomodoConnectionService extends KomodoService {
      * @param uriInfo
      *        the request URI information (never <code>null</code>)
      * @param connectionName
-     *        the id of the Connection being retrieved (cannot be empty)
-     * @return the JSON representation of the Connection (never <code>null</code>)
+     *        the id of the connection whose summary is being retrieved (cannot be empty)
+     * @return a JSON document representing the summary of the requested connection in the Komodo workspace (never <code>null</code>)
      * @throws KomodoRestException
      *         if there is a problem finding the specified workspace Connection or constructing the JSON representation
      */
     @GET
     @Path( V1Constants.CONNECTION_PLACEHOLDER )
     @Produces( { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML } )
-    @ApiOperation(value = "Find connection by name", response = RestConnection.class)
+    @ApiOperation(value = "Find connection by name", response = RestConnectionSummary.class)
     @ApiResponses(value = {
         @ApiResponse(code = 404, message = "No Connection could be found with name"),
         @ApiResponse(code = 406, message = "Only JSON or XML is returned by this operation"),
@@ -351,18 +350,49 @@ public final class KomodoConnectionService extends KomodoService {
 
         List<MediaType> mediaTypes = headers.getAcceptableMediaTypes();
         UnitOfWork uow = null;
+        boolean includeSchemaStatus = false;
+        boolean includeConnection = true;
 
         try {
-            uow = createTransaction(principal, "getConnection", true ); //$NON-NLS-1$
+            { // include-schema-status query parameter
+                final String param = uriInfo.getQueryParameters().getFirst( QueryParam.INCLUDE_SCHEMA_STATUS );
+
+                if ( param != null ) {
+                    includeSchemaStatus = Boolean.parseBoolean( param );
+                }
+            }
+
+            { // include-connection query parameter
+                final String param = uriInfo.getQueryParameters().getFirst( QueryParam.INCLUDE_CONNECTION );
+
+                if ( param != null ) {
+                	includeConnection = Boolean.parseBoolean( param );
+                }
+            }
+
+            final String txId = "getConnection?includeSchemaStatus=" + includeSchemaStatus + "&includeConnection=" + includeConnection; //$NON-NLS-1$ //$NON-NLS-2$
+            uow = createTransaction(principal, txId, true ); //$NON-NLS-1$
 
             Connection connection = findConnection(uow, connectionName);
             if (connection == null)
                 return commitNoConnectionFound(uow, mediaTypes, connectionName);
 
-            KomodoProperties properties = new KomodoProperties();
-            final RestConnection restConnection = entityFactory.create(connection, uriInfo.getBaseUri(), uow, properties);
-            LOGGER.debug("getConnection:Connection '{0}' entity was constructed", connection.getName(uow)); //$NON-NLS-1$
-            return commit( uow, mediaTypes, restConnection );
+        	RestConnection restConnection = null;
+        	RestNamedVdbStatus restStatus = null;
+
+        	if ( includeConnection ) {
+	        	KomodoProperties properties = new KomodoProperties();
+	            restConnection = entityFactory.create(connection, uriInfo.getBaseUri(), uow, properties);
+	            LOGGER.debug("getConnection:Connection '{0}' entity was constructed", connection.getName(uow)); //$NON-NLS-1$
+        	}
+
+        	if ( includeSchemaStatus ) {
+        		restStatus = createVdbStatusRestEntity( uow, getMetadataInstance().getVdbs(), connection );
+	            LOGGER.debug("getConnection:Connection '{0}' status entity was constructed", connection.getName(uow)); //$NON-NLS-1$
+        	}
+
+        	final RestConnectionSummary summary = new RestConnectionSummary( uriInfo.getBaseUri(), restConnection, restStatus );
+        	return commit( uow, mediaTypes, summary );
 
         } catch ( final Exception e ) {
             if ( ( uow != null ) && ( uow.getState() != State.ROLLED_BACK ) ) {
